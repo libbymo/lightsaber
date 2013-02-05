@@ -6,7 +6,8 @@
       for (var j = 0; j < self.length; j++){
 
         var $self       = $(self[j])
-          , end         = $self.offset().top - $(window).height()/2;
+          , offsets     = $self.offset()
+          , end         = $self.offset().top - $(window).height()/2;  // animation ends midscreen
 
         for (var i = 0; i < options.length; i++){
           if (options[i].trigger){                          // check if there's a trigger
@@ -18,11 +19,9 @@
               var trigString = options[i].trigger;
               console.log("string");
               if(trigString[trigString.length - 1] === "%"){
-                end = $(document).height() * (parseInt(trigString) / 100);
-                console.log('percentage' + end);
+                end = $(document).height() * (parseInt(trigString, 'decimal') / 100);
               } else {
-                end = $(trigString).offset().top;
-                console.log('end in selector ' + $(trigString).offset());
+                end = $(trigString).offset().top;           // end when element reaches top of screen.
               }
             }
           } else {
@@ -30,16 +29,23 @@
           }
 
           var start       = end - $(window).height()/2
-            , inWindow    = ($(window).scrollTop() > start) && ($(window).scrollTop() < end)
-            , aboveWindow = ($(window).scrollTop() < start)
-            , belowWindow = ($(window).scrollTop() > end);
+            , position
+            , inWindow    = ($(window).scrollTop() > start) && ($(window).scrollTop() < end)  // inAnimation
+            , aboveWindow = ($(window).scrollTop() < start)                                   // aboveAnimation
+            , belowWindow = ($(window).scrollTop() > end);                                    // belowAnimation
 
           
           // Which effect are we doing?
           switch(options[i].effect){
-            case "slideRight":
+            case "slideLeft":
+
               if(inWindow){
-                var position  = 1 -(($(window).scrollTop() - start)/((end - start)));
+                // var position  = 1 - (($(window).scrollTop() - start)/((end - start)));
+                // this the same as:
+                // difference between the animationEnd and where the scroll is now
+                // divided by the entire animationRange gives the amount remaining.
+                position  = ((end - $(window).scrollTop())/((end - start)));
+
                 console.log("position: " + window.innerWidth * position);
                 $self.css("right", "-" + window.innerWidth * position + "px");
               } 
@@ -48,12 +54,14 @@
               }
               else if(belowWindow){
                 $self.css("right", "0px");
-              };
+              }
               break;
 
-            case "slideLeft":
+            case "slideRight":
+
               if(inWindow){
-                var position  = 1 -(($(window).scrollTop() - start)/((end - start)));
+                // var position  = 1 -(($(window).scrollTop() - start)/((end - start)));
+                position  = ((end - $(window).scrollTop())/((end - start)));
                 console.log("position: " + window.innerWidth * position);
                 $self.css("left", "-" + window.innerWidth * position + "px");
               } 
@@ -62,13 +70,67 @@
               }
               else if(belowWindow){
                 $self.css("left", "0px");
-              };
+              }
               break;
+
+            case "slideLeftThru":
+
+              $self.css('margin-left', - window.innerWidth - $self.outerWidth() + "px");
+
+              if(inWindow || aboveWindow){
+                // var position  = 1 -(($(window).scrollTop() - start)/((end - start)));
+                position  = ((end - $(window).scrollTop())/((end - start)));
+
+                $self.css("left", (window.innerWidth + $self.width()) * position + "px"); 
+                  // $self.css("right", "-" + (window.innerWidth) * position + "px"); 
+                console.log("position: " + window.innerWidth * position);
+              }
+              else {
+                $self.css("left", (2 * (window.innerWidth + $self.outerWidth())) + "px");
+              }
+
+              break;
+
+            case "slideRightThru":
+
+              $self.css('margin-right', - window.innerWidth - $self.outerWidth() + "px");
+
+              if(inWindow || aboveWindow){
+                // var position  = 1 -(($(window).scrollTop() - start)/((end - start)));
+                position  = ((end - $(window).scrollTop())/((end - start)));
+
+                $self.css("right", (window.innerWidth + $self.width()) * position + "px"); 
+                  // $self.css("right", "-" + (window.innerWidth) * position + "px"); 
+                console.log("position: " + window.innerWidth * position);
+              }
+              else {
+                $self.css("right", (2 * (window.innerWidth + $self.outerWidth())) + "px");
+              }
+
+              break;       
+
+            case "slideUp":
+
+              console.log('in slideup');
+              $self.css('margin-top', - window.innerHeight - $self.outerHeight() + "px");
+
+              if(inWindow){
+                console.log('in window');
+                position  = ((end - $(window).scrollTop())/((end - start)));
+                $self.css("bottom", ((2 * window.innerHeight) + $self.outerHeight()) * position + "px"); 
+                console.log("bottom: " + (2 * window.innerHeight) + $self.outerHeight() * position + "px");
+              
+              }
+              // else {
+              //   $self.css("top", (2 * (window.innerHeight + $self.outerHeight())) + "px");
+              // }
+
+              break;          
 
             default:
               console.log("nothing to do!");
-          };
-        };
+          }
+        }
       }
     });
 	};
@@ -185,3 +247,7 @@
   // });
 
 
+// Note.  position has something to do with innerWidth - elements.innerWidth
+// ----------offset.left[+elements.width]---------remaining.
+
+// window.innerWidth + element width 
